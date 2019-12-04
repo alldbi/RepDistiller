@@ -15,7 +15,6 @@ import torch.optim as optim
 import torch.nn as nn
 import torch.backends.cudnn as cudnn
 
-
 from models import model_dict
 from models.util import Embed, ConvReg, LinearEmbed
 from models.util import Connector, Translator, Paraphraser
@@ -33,7 +32,6 @@ from helper.pretrain import init
 
 
 def parse_option():
-
     hostname = socket.gethostname()
 
     parser = argparse.ArgumentParser('argument for training')
@@ -57,22 +55,24 @@ def parse_option():
     parser.add_argument('--dataset', type=str, default='cifar100', choices=['cifar100'], help='dataset')
 
     # model
-    parser.add_argument('--model_s', type=str, default='resnet8',
+    parser.add_argument('--model_s', type=str, default='resnet20',
                         choices=['resnet8', 'resnet14', 'resnet20', 'resnet32', 'resnet44', 'resnet56', 'resnet110',
                                  'resnet8x4', 'resnet32x4', 'wrn_16_1', 'wrn_16_2', 'wrn_40_1', 'wrn_40_2',
                                  'vgg8', 'vgg11', 'vgg13', 'vgg16', 'vgg19', 'ResNet50',
                                  'MobileNetV2', 'ShuffleV1', 'ShuffleV2'])
-    parser.add_argument('--path_t', type=str, default=None, help='teacher model snapshot')
+    parser.add_argument('--path_t', type=str,
+                        default='/media/lab320/0274E2F866ED37FC/PycharmProjects/githubs/knowledge distilation/RepDistiller/scripts/save/models/resnet110_vanilla/ckpt_epoch_240.pth',
+                        help='teacher model snapshot')
 
     # distillation
-    parser.add_argument('--distill', type=str, default='kd', choices=['kd', 'hint', 'attention', 'similarity',
-                                                                      'correlation', 'vid', 'crd', 'kdsvd', 'fsp',
-                                                                      'rkd', 'pkt', 'abound', 'factor', 'nst'])
+    parser.add_argument('--distill', type=str, default='crd', choices=['kd', 'hint', 'attention', 'similarity',
+                                                                       'correlation', 'vid', 'crd', 'kdsvd', 'fsp',
+                                                                       'rkd', 'pkt', 'abound', 'factor', 'nst'])
     parser.add_argument('--trial', type=str, default='1', help='trial id')
 
     parser.add_argument('-r', '--gamma', type=float, default=1, help='weight for classification')
-    parser.add_argument('-a', '--alpha', type=float, default=None, help='weight balance for KD')
-    parser.add_argument('-b', '--beta', type=float, default=None, help='weight balance for other losses')
+    parser.add_argument('-a', '--alpha', type=float, default=0, help='weight balance for KD')
+    parser.add_argument('-b', '--beta', type=float, default=0.8, help='weight balance for other losses')
 
     # KL distillation
     parser.add_argument('--kd_T', type=float, default=4, help='temperature for KD distillation')
@@ -265,9 +265,9 @@ def main():
         raise NotImplementedError(opt.distill)
 
     criterion_list = nn.ModuleList([])
-    criterion_list.append(criterion_cls)    # classification loss
-    criterion_list.append(criterion_div)    # KL divergence loss, original knowledge distillation
-    criterion_list.append(criterion_kd)     # other knowledge distillation loss
+    criterion_list.append(criterion_cls)  # classification loss
+    criterion_list.append(criterion_div)  # KL divergence loss, original knowledge distillation
+    criterion_list.append(criterion_kd)  # other knowledge distillation loss
 
     # optimizer
     optimizer = optim.SGD(trainable_list.parameters(),
