@@ -20,6 +20,7 @@ def adjust_learning_rate(epoch, opt, optimizer):
         new_lr = opt.learning_rate * (opt.lr_decay_rate ** steps)
         for param_group in optimizer.param_groups:
             param_group['lr'] = new_lr
+        return new_lr
 
 
 class AverageMeter(object):

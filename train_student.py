@@ -61,7 +61,7 @@ def parse_option():
                                  'vgg8', 'vgg11', 'vgg13', 'vgg16', 'vgg19', 'ResNet50',
                                  'MobileNetV2', 'ShuffleV1', 'ShuffleV2'])
     parser.add_argument('--path_t', type=str,
-                        default='/media/lab320/0274E2F866ED37FC/PycharmProjects/githubs/knowledge distilation/RepDistiller/scripts/save/models/resnet110_vanilla/ckpt_epoch_240.pth',
+                        default='./scripts/save/models/resnet110_vanilla/ckpt_epoch_240.pth',
                         help='teacher model snapshot')
 
     # distillation
@@ -170,6 +170,7 @@ def main():
     data = torch.randn(2, 3, 32, 32)
     model_t.eval()
     model_s.eval()
+
     feat_t, _ = model_t(data, is_feat=True)
     feat_s, _ = model_s(data, is_feat=True)
 
@@ -285,13 +286,13 @@ def main():
 
     # validate teacher accuracy
     teacher_acc, _, _ = validate(val_loader, model_t, criterion_cls, opt)
-    print('teacher accuracy: ', teacher_acc)
+    print('teacher accuracy: ', teacher_acc, '\n')
 
     # routine
     for epoch in range(1, opt.epochs + 1):
 
-        adjust_learning_rate(epoch, opt, optimizer)
-        print("==> training...")
+        lr = adjust_learning_rate(epoch, opt, optimizer)
+        print("==> training with lr:", lr)
 
         time1 = time.time()
         train_acc, train_loss = train(epoch, train_loader, module_list, criterion_list, optimizer, opt)
@@ -302,6 +303,10 @@ def main():
         logger.log_value('train_loss', train_loss, epoch)
 
         test_acc, tect_acc_top5, test_loss = validate(val_loader, model_s, criterion_cls, opt)
+
+        print('Test: Acc@1 {top1:.3f} Acc@5 {top5:.3f}\n'
+              .format(top1=test_acc, top5=tect_acc_top5))
+
 
         logger.log_value('test_acc', test_acc, epoch)
         logger.log_value('test_loss', test_loss, epoch)
